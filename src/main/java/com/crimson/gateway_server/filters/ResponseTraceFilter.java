@@ -1,5 +1,6 @@
 package com.crimson.gateway_server.filters;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,21 +11,17 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class ResponseTraceFilter {
     private static final Logger logger = LoggerFactory.getLogger(ResponseTraceFilter.class);
 
-    @Autowired
-    FilterUtility filterUtility;
+    private final FilterUtility filterUtility;
 
     @Bean
     public GlobalFilter postGlobalFilter(){
-        return (exchange,chain) ->{
-            return chain.filter(exchange).then(Mono.fromRunnable(()->{
-                HttpHeaders requestHeaders = exchange.getRequest().getHeaders();
-                String correlationId = filterUtility.getCorrelationId(requestHeaders);
-                logger.debug("ResponseTraceFilter::postGlobalFilter: Setting Correlation ID {} in response header", filterUtility.getCorrelationId(requestHeaders));
-                exchange.getResponse().getHeaders().add("correlation-id",correlationId);
-            }));
-        };
+        return (exchange,chain) -> chain.filter(exchange).then(Mono.fromRunnable(()->{
+            filterUtility.setResponseCorrelationId(exchange);
+            filterUtility.persistApiResponseInfo(exchange);
+        }));
     }
 }
