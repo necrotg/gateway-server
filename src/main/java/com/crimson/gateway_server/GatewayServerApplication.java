@@ -36,6 +36,7 @@ public class GatewayServerApplication {
 								.circuitBreaker(config -> config.setName("orderingCircuitBreaker")
 										.setFallbackUri("forward:/contactSupport")))
 						.uri("lb://ORDERING")).build();
+
 	}
 	@Bean
 	public RedisRateLimiter redisRateLimiter(){
